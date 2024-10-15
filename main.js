@@ -1,129 +1,140 @@
-import * as THREE from 'three'; 
+import * as THREE from 'three';
 import WebGL from 'three/addons/capabilities/WebGL.js';
+// import { FBXLoader } from 'three/examples/jsm/loaders/FBXLoader.js';
+import { TextureLoader } from 'three';
 
-const scene = new THREE.Scene(); 
-const camera = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 0.1, 1000 ); 
-const renderer = new THREE.WebGLRenderer(); renderer.setSize( window.innerWidth, window.innerHeight ); 
+// Scene setup
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+const renderer = new THREE.WebGLRenderer();
+renderer.setSize(window.innerWidth, window.innerHeight);
 document.body.appendChild(renderer.domElement);
 
-//creating a path
-const geometry = new THREE.PlaneGeometry(5,50);
-const material = new THREE.MeshBasicMaterial({ color: 0x00ff00, side: THREE.DoubleSide });
-const path = new THREE.Mesh(geometry, material);
-path.rotation.x = -Math.PI / 2;
-scene.add(path); 
+// Loading the grass texture for the path
+const textureLoader = new THREE.TextureLoader();
+const grassTexture = textureLoader.load('Assets/background.png');
+grassTexture.wrapS = THREE.RepeatWrapping;
+grassTexture.wrapT = THREE.RepeatWrapping;
+grassTexture.repeat.set(10, 10);
 
-//creating a character I will use a cube a placeholder
+// Creating the path
+const pathGeometry = new THREE.PlaneGeometry(5, 50);
+const pathMaterial = new THREE.MeshBasicMaterial({ map: grassTexture, side: THREE.DoubleSide });
+const path = new THREE.Mesh(pathGeometry, pathMaterial);
+path.rotation.x = -Math.PI / 2;
+scene.add(path);
+
+// Character setup (using a cube as a placeholder)
 const characterGeometry = new THREE.BoxGeometry(1, 1, 1);
 const characterMaterial = new THREE.MeshBasicMaterial({ color: 0x0000ff });
 const character = new THREE.Mesh(characterGeometry, characterMaterial);
 character.position.set(0, 0.5, 0);
 scene.add(character);
 
-// Creating an obstacle (a red cube)
-const obstacleGeometry = new THREE.BoxGeometry(1, 1, 1); // Obstacle is also a cube
-const obstacleMaterial = new THREE.MeshBasicMaterial({ color: 0xff0000 }); // Red color for the obstacle
-const obstacles = []; // Array to hold multiple obstacles
-
-// Define obstacle positions
+// Creating obstacles
+const obstacleGeometry = new THREE.BoxGeometry(1, 1, 1);
+const obstacleMaterial = new THREE.MeshBasicMaterial({ color: 0xff0000 });
+const obstacles = [];
 const obstaclePositions = [
-    { x: 0, z: 10 },
-    { x: 2, z: 20 },
-    { x: -2, z: 30 },
-    { x: 1, z: 40 }
+    { x: 0, z: 10 }, { x: 2, z: 15 }, { x: -2, z: 20 }, { x: 1, z: 25 },
+    { x: 0, z: 30 }, { x: 2, z: 35 }, { x: -2, z: 40 }, { x: 1, z: 45 },
+    { x: 0, z: 50 }, { x: 2, z: 55 }, { x: -2, z: 60 }, { x: 1, z: 65 },
+    { x: 0, z: 70 }, { x: 2, z: 75 }, { x: -2, z: 80 }, { x: 1, z: 85 },
+    { x: 0, z: 90 }, { x: 2, z: 95 }, { x: -2, z: 100 }, { x: 1, z: 105 }
 ];
 
-// Create obstacles based on the positions
+// Adding obstacles to the scene
 obstaclePositions.forEach(pos => {
     const obstacle = new THREE.Mesh(obstacleGeometry, obstacleMaterial);
     obstacle.position.set(pos.x, 0.5, pos.z);
     obstacles.push(obstacle);
     scene.add(obstacle);
 });
-//camera position
-camera.position.set(0, 5, 10);//behind the runner
-camera.lookAt(character.position);//make the camera look at the charecter
 
-//I added arrow keys to move the character  
+// Setting up the background
+const backgroundTexture = textureLoader.load('Assets/TCom_3dplant_Bushgrass_001_header6.jpg');
+const backgroundGeometry = new THREE.PlaneGeometry(1000, 1000);
+const backgroundMaterial = new THREE.MeshBasicMaterial({ map: backgroundTexture, side: THREE.DoubleSide });
+const backgroundMesh = new THREE.Mesh(backgroundGeometry, backgroundMaterial);
+backgroundMesh.rotation.x = Math.PI / 2;
+backgroundMesh.position.set(0, -10, -100);
+scene.add(backgroundMesh);
+
+// Camera positioning
+camera.position.set(0, 5, 10);
+camera.lookAt(character.position);
+
+// Keyboard controls for moving the character
 let moveLeft = false;
 let moveRight = false;
-
 document.addEventListener('keydown', (event) => {
-    if (event.key === 'ArrowLeft') {
-        moveLeft = true;
-    } else if (event.key === 'ArrowRight') {
-        moveRight = true;
-    }
+    if (event.key === 'ArrowLeft') moveLeft = true;
+    if (event.key === 'ArrowRight') moveRight = true;
 });
-
 document.addEventListener('keyup', (event) => {
-    if (event.key === 'ArrowLeft') {
-        moveLeft = false;
-    } else if (event.key === 'ArrowRight') {
-        moveRight = false;
-    }
+    if (event.key === 'ArrowLeft') moveLeft = false;
+    if (event.key === 'ArrowRight') moveRight = false;
 });
 
+// Game messages for game over and finish line
 const gameOverMessage = document.getElementById('gameOverMessage');
-//reset the game 
-function resetGame() {
-    character.position.set(0, 0.5, 0); // Reset character position
+const finishLineMessage = document.createElement('div');
+finishLineMessage.id = 'finishLineMessage';
+finishLineMessage.innerText = 'Level 1 Completed!';
+document.body.appendChild(finishLineMessage);
 
-    // Reset all obstacle positions
+// Reset function for restarting the game
+function resetGame() {
+    character.position.set(0, 0.5, 0);
     obstacles.forEach((obstacle, index) => {
         const pos = obstaclePositions[index];
         obstacle.position.set(pos.x, 0.5, pos.z);
     });
-
-    gameOverMessage.style.display = 'none'; // Hide the game over message
+    gameOverMessage.style.display = 'none';
+    finishLineMessage.style.display = 'none';
 }
 
-if ( WebGL.isWebGL2Available() ) {
-
-	// Initiate function or other initializations here
-	animate();
-
+// Check for WebGL support
+if (WebGL.isWebGL2Available()) {
+    animate();
 } else {
-
-	const warning = WebGL.getWebGL2ErrorMessage();
-	document.getElementById( 'container' ).appendChild( warning );
-
+    const warning = WebGL.getWebGL2ErrorMessage();
+    document.getElementById('container').appendChild(warning);
 }
 
-function animate() { 
-    renderer.render( scene, camera ); 
-    
-    //move the character forward
-    character.position.z += 0.1;//move the character forward
+// Animation loop
+function animate() {
+    renderer.render(scene, camera);
+    grassTexture.offset.y += 0.02;
+    character.position.z += 0.1;
 
-    // Move the path backward to simulate running
-    path.position.z = character.position.z - 20; // Path follows the character's position
-
-    //camera should keep track of the character at all times
+    // Moving path to simulate running
+    path.position.z = character.position.z - 20;
     camera.position.z = character.position.z + 10;
-    camera.lookAt(character.position);//camera focus on the runner at all times
-    
+    camera.lookAt(character.position);
+
+    // Detect collision
     const characterBox = new THREE.Box3().setFromObject(character);
-    // Check for collision with each obstacle
-            for (let i = 0; i < obstacles.length; i++) {
-                const obstacleBox = new THREE.Box3().setFromObject(obstacles[i]);
-                if (characterBox.intersectsBox(obstacleBox)) {
-                    console.log("Collision detected with obstacle " + i + "! Game Over.");
-                    gameOverMessage.style.display = 'block'; // Show the game over message
-                    setTimeout(resetGame, 2000); // Reset the game after 2 seconds
-                    return; // Stop further execution for this frame
-                }
-            }
-
-    // Move the character left or right based on the key pressed
-    if (moveLeft && character.position.x > -2) {
-        character.position.x -= 0.1; // Move left
+    for (let i = 0; i < obstacles.length; i++) {
+        const obstacleBox = new THREE.Box3().setFromObject(obstacles[i]);
+        if (characterBox.intersectsBox(obstacleBox)) {
+            console.log("Collision detected with obstacle " + i + "! Game Over.");
+            gameOverMessage.style.display = 'block';
+            setTimeout(resetGame, 2000);
+            return;
+        }
     }
-    if (moveRight && character.position.x < 2) {
-        character.position.x += 0.1; // Move right
+
+    // Finish line check
+    if (character.position.z >= 110) {
+        finishLineMessage.style.display = 'block';
+        setTimeout(resetGame, 3000);
+        return;
     }
-    renderer.setAnimationLoop( animate );
-} 
 
+    // Left and right movement
+    if (moveLeft && character.position.x > -2) character.position.x -= 0.1;
+    if (moveRight && character.position.x < 2) character.position.x += 0.1;
 
-
+    renderer.setAnimationLoop(animate);
+}

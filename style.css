@@ -1,4 +1,4 @@
-body{
+body {
     margin: 0;
     padding: 0;
 }
@@ -8,7 +8,23 @@ body{
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
+    padding: 20px; /* Added padding for readability */
+    background-color: rgba(255, 0, 0, 0.8); /* Background color for contrast */
+    color: #fff;
     font-size: 36px;
-    color: red;
     display: none; /* Initially hidden */
+    z-index: 10; /* Ensures it appears above other elements */
+}
+
+#finishLineMessage {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    padding: 20px;
+    background-color: rgba(0, 255, 0, 0.8);
+    color: #fff;
+    font-size: 24px;
+    display: none; /* Initially hidden */
+    z-index: 10; /* Ensures it appears above other elements */
 }
