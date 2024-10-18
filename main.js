@@ -1,6 +1,5 @@
 import * as THREE from 'three';
 import WebGL from 'three/addons/capabilities/WebGL.js';
-// import { FBXLoader } from 'three/examples/jsm/loaders/FBXLoader.js';
 import { TextureLoader } from 'three';
 
 // Scene setup
@@ -94,47 +93,88 @@ function resetGame() {
     finishLineMessage.style.display = 'none';
 }
 
-// Check for WebGL support
-if (WebGL.isWebGL2Available()) {
-    animate();
-} else {
-    const warning = WebGL.getWebGL2ErrorMessage();
-    document.getElementById('container').appendChild(warning);
+// Pause, Resume, and Quit listeners
+document.addEventListener('keydown', (event) => {
+    if (event.key === 'P' || event.key === 'p') {
+        pauseGame();
+    }
+    if (event.key === 'R' || event.key === 'r') {
+        resumeGame();
+    }
+    if (event.key === 'Q' || event.key === 'q') {
+        quitGame();
+    }
+});
+
+let gamePaused = false;
+
+// Function to pause the game
+function pauseGame() {
+    if (!gamePaused) {
+        gamePaused = true;
+        renderer.setAnimationLoop(null);  // Stops the animation loop
+        console.log("Game paused");
+    }
+}
+
+// Function to resume the game
+function resumeGame() {
+    if (gamePaused) {
+        gamePaused = false;
+        renderer.setAnimationLoop(animate);  // Resumes the animation loop
+        console.log("Game resumed");
+    }
+}
+
+// Function to quit the game
+function quitGame() {
+    console.log("Game quit");
+    setTimeout(resetGame, 2000);
+    renderer.setAnimationLoop(null);  // Stops the animation loop
 }
 
 // Animation loop
 function animate() {
-    renderer.render(scene, camera);
-    grassTexture.offset.y += 0.02;
-    character.position.z += 0.1;
+    if (!gamePaused) {
+        // Update character movement and camera
+        renderer.render(scene, camera);
+        grassTexture.offset.y += 0.02;
+        character.position.z += 0.1;
 
-    // Moving path to simulate running
-    path.position.z = character.position.z - 20;
-    camera.position.z = character.position.z + 10;
-    camera.lookAt(character.position);
+        // Move path and camera
+        path.position.z = character.position.z - 20;
+        camera.position.z = character.position.z + 10;
+        camera.lookAt(character.position);
 
-    // Detect collision
-    const characterBox = new THREE.Box3().setFromObject(character);
-    for (let i = 0; i < obstacles.length; i++) {
-        const obstacleBox = new THREE.Box3().setFromObject(obstacles[i]);
-        if (characterBox.intersectsBox(obstacleBox)) {
-            console.log("Collision detected with obstacle " + i + "! Game Over.");
-            gameOverMessage.style.display = 'block';
-            setTimeout(resetGame, 2000);
+        // Collision detection
+        const characterBox = new THREE.Box3().setFromObject(character);
+        for (let i = 0; i < obstacles.length; i++) {
+            const obstacleBox = new THREE.Box3().setFromObject(obstacles[i]);
+            if (characterBox.intersectsBox(obstacleBox)) {
+                console.log("Collision detected with obstacle " + i + "! Game Over.");
+                gameOverMessage.style.display = 'block';
+                setTimeout(resetGame, 2000);
+                return;
+            }
+        }
+
+        // Finish line check
+        if (character.position.z >= 110) {
+            finishLineMessage.style.display = 'block';
+            setTimeout(resetGame, 3000);
             return;
         }
+
+        // Handle left and right movement
+        if (moveLeft && character.position.x > -2) character.position.x -= 0.1;
+        if (moveRight && character.position.x < 2) character.position.x += 0.1;
     }
+}
 
-    // Finish line check
-    if (character.position.z >= 110) {
-        finishLineMessage.style.display = 'block';
-        setTimeout(resetGame, 3000);
-        return;
-    }
-
-    // Left and right movement
-    if (moveLeft && character.position.x > -2) character.position.x -= 0.1;
-    if (moveRight && character.position.x < 2) character.position.x += 0.1;
-
-    renderer.setAnimationLoop(animate);
+// Check for WebGL support and start animation
+if (WebGL.isWebGL2Available()) {
+    renderer.setAnimationLoop(animate);  // Starts the animation loop
+} else {
+    const warning = WebGL.getWebGL2ErrorMessage();
+    document.getElementById('container').appendChild(warning);
 }
